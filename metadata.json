@@ -1,0 +1,6 @@
+{
+  "name": "GeoTactical Telemetry Monitor",
+  "description": "Tactical geospatial surveillance and agricultural telemetry console with live radar tracking, sensor networks, and zone analysis powered by MapLibre GL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

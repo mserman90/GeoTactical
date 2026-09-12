@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+/* Custom CRT Scanline & Tactical Radar Gradients */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 5s linear infinite;
+}
+
+/* Custom scrollbar for dark tactical look */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #080808;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff88;
+}
