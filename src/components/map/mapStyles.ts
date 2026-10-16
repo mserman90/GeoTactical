@@ -1,35 +1,52 @@
 import type { StyleSpecification } from 'maplibre-gl';
 import { MapStyleMode } from '../../types';
 
+export type MapStyleDefinition = StyleSpecification | string;
+
 /**
- * Tactical Dark Raster Base Map (Carto Dark Matter)
- * 100% Free, Keyless, High-contrast for military HUD overlays and night telemetry.
+ * OpenFreeMap Dark Vector Map Style URL
+ * 100% Free, Open-Source, Zero API Keys, Zero Rate Limits, No Registration.
+ * Native vector style specifically built for MapLibre GL JS.
  */
-export const TACTICAL_DARK_STYLE: StyleSpecification = {
+export const OPENFREEMAP_DARK_URL = 'https://tiles.openfreemap.org/styles/dark';
+
+/**
+ * Keyless Offline Dark Raster Fallback (Desaturated/Inverted OpenStreetMap)
+ * In case vector tiles are unavailable or strictly offline raster is needed.
+ */
+export const OFFLINE_DARK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
-    'carto-dark': {
+    'osm-dark-tiles': {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       ],
       tileSize: 256,
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      attribution: '&copy; OpenStreetMap contributors',
     },
   },
   layers: [
     {
-      id: 'carto-dark-layer',
+      id: 'osm-dark-layer',
       type: 'raster',
-      source: 'carto-dark',
+      source: 'osm-dark-tiles',
+      paint: {
+        'raster-saturation': -1,
+        'raster-brightness-max': 0.35,
+        'raster-contrast': 0.4,
+      },
       minzoom: 0,
-      maxzoom: 22,
+      maxzoom: 19,
     },
   ],
 };
+
+/**
+ * Tactical Dark Base Map
+ * Uses OpenFreeMap Dark vector style (100% Free & Keyless, no Carto API key required).
+ */
+export const TACTICAL_DARK_STYLE: MapStyleDefinition = OPENFREEMAP_DARK_URL;
 
 /**
  * Satellite Recon Aerial Imagery Base Map (ESRI World Imagery)
@@ -86,8 +103,8 @@ export const TERRAIN_TOPO_STYLE: StyleSpecification = {
 };
 
 /**
- * OpenStreetMap Standard Base Map (OSM Carto)
- * 100% Free, Open-Source, Community-maintained global cartographic database.
+ * OpenStreetMap Standard Base Map (OSM Standard)
+ * 100% Free, Open-Source, Community-maintained global cartographic database (Zero Keys).
  */
 export const OSM_STANDARD_STYLE: StyleSpecification = {
   version: 8,
@@ -112,7 +129,7 @@ export const OSM_STANDARD_STYLE: StyleSpecification = {
   ],
 };
 
-export const MAP_STYLES: Record<MapStyleMode, StyleSpecification> = {
+export const MAP_STYLES: Record<MapStyleMode, MapStyleDefinition> = {
   tactical_dark: TACTICAL_DARK_STYLE,
   satellite_recon: SATELLITE_RECON_STYLE,
   terrain_topo: TERRAIN_TOPO_STYLE,
@@ -123,8 +140,8 @@ export const MAP_STYLE_INFO: Record<MapStyleMode, { name: string; shortName: str
   tactical_dark: {
     name: 'Tactical Dark',
     shortName: 'DARK',
-    provider: 'CARTO Dark Matter / OSM',
-    description: 'High-contrast dark vector raster for tactical night ops and HUD overlays (Free & Keyless)',
+    provider: 'OpenFreeMap Dark Vector',
+    description: 'High-contrast dark vector GIS built for MapLibre with zero API keys or limits (replaces Carto)',
   },
   satellite_recon: {
     name: 'Satellite Recon',
@@ -142,10 +159,10 @@ export const MAP_STYLE_INFO: Record<MapStyleMode, { name: string; shortName: str
     name: 'OpenStreetMap',
     shortName: 'OSM',
     provider: 'OpenStreetMap Standard',
-    description: 'Open-source community cartography with complete land-use roads (Free & Keyless)',
+    description: '100% open-source community cartography (Free & Keyless)',
   },
 };
 
-export function getMapStyle(mode: MapStyleMode): StyleSpecification {
+export function getMapStyle(mode: MapStyleMode): MapStyleDefinition {
   return MAP_STYLES[mode] || TACTICAL_DARK_STYLE;
 }

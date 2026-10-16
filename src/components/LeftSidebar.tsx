@@ -408,7 +408,7 @@ export default function LeftSidebar({
           <span className="text-[#666] tracking-widest text-[8px]">MAPLIBRE GL v6</span>
         </div>
         <div className="text-[7.5px] font-mono text-[#555] mt-0.5 tracking-wider">
-          CARTO • ESRI • TOPO • OSM
+          OPENFREEMAP • ESRI • TOPO • OSM
         </div>
       </div>
     </aside>

@@ -9,11 +9,11 @@
 
 - **100% Free & Keyless MapLibre GL GIS Infrastructure:**
   - Zero API keys, zero tokens, and zero usage limits required across all map layers.
-  - Dynamic switching between 4 free & open raster basemaps:
-    - **Tactical Dark (DARK):** Carto Dark Matter — high-contrast raster for military HUD overlays and night ops.
+  - Dynamic switching between 4 free & open basemaps:
+    - **Tactical Dark (DARK):** OpenFreeMap Dark Vector (`tiles.openfreemap.org`) — ultra-crisp vector map designed for MapLibre with zero API keys or limits (replaces Carto).
     - **Satellite Recon (SATELLITE):** ESRI World Imagery — high-resolution photographic earth observation.
     - **Terrain Topo (TOPO):** ESRI World Topo — shaded relief and elevation contours for slope and watershed analysis.
-    - **OpenStreetMap (OSM):** OpenStreetMap Standard Carto — 100% open-source community cartography with complete land-use roads.
+    - **OpenStreetMap (OSM):** OpenStreetMap Standard — 100% open-source community cartography with complete land-use roads.
   - 3D pitch perspective camera control with bearing reset, zoom controls, and live WGS-84 coordinate reticle.
   - Interactive agricultural sector polygons with alert level outlines (Critical, Moderate, Optimal) and soil moisture percentages.
 - **Multi-Region Agricultural Corridors:**

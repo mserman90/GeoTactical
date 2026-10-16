@@ -148,7 +148,7 @@ export default function Header({
                 ? 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/40 shadow-[0_0_8px_#00ff88]'
                 : 'text-[#888] hover:text-[#ccc]'
             }`}
-            title="Carto Dark Matter (100% Free & Keyless)"
+            title="OpenFreeMap Dark Vector (100% Free & Keyless, No API Key)"
           >
             <Layers className="w-3 h-3" />
             <span className="hidden lg:inline">DARK</span>

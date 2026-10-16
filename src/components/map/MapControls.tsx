@@ -121,7 +121,7 @@ export default function MapControls({
         {mapStyle && (
           <span className="hidden sm:inline text-[#00d4ff] font-bold">
             {mapStyle === 'tactical_dark'
-              ? 'CARTO DARK'
+              ? 'OFM DARK'
               : mapStyle === 'satellite_recon'
               ? 'ESRI SATELLITE'
               : mapStyle === 'terrain_topo'
