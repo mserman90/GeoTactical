@@ -17,7 +17,9 @@ import {
   Maximize2, 
   X,
   Gauge,
-  Play
+  Play,
+  Crosshair,
+  Navigation
 } from 'lucide-react';
 import { Asset, Sector, TelemetryEvent, EventSeverity } from '../types';
 import { soundManager } from '../utils/audio';
@@ -32,6 +34,10 @@ interface RightSidebarProps {
   onClearLogs: () => void;
   isOpen: boolean;
   onToggleOpen: () => void;
+  isChaseCam?: boolean;
+  onToggleChaseCam?: () => void;
+  onStartRoutePlanning?: () => void;
+  onExportSectorsGeoJson?: () => void;
 }
 
 export default function RightSidebar({
@@ -43,6 +49,10 @@ export default function RightSidebar({
   onTriggerSectorIrrigation,
   isOpen,
   onToggleOpen,
+  isChaseCam = false,
+  onToggleChaseCam,
+  onStartRoutePlanning,
+  onExportSectorsGeoJson,
 }: RightSidebarProps) {
   const [severityFilter, setSeverityFilter] = useState<EventSeverity | 'all'>('all');
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
@@ -146,9 +156,23 @@ export default function RightSidebar({
               </div>
             </div>
 
-            <div className="text-right font-mono text-[9px] text-[#777]">
+            <div className="text-right font-mono text-[9px] text-[#777] flex flex-col items-end">
               <div>LAT: {selectedAsset.lat.toFixed(4)}°</div>
               <div>LNG: {selectedAsset.lng.toFixed(4)}°</div>
+              {onToggleChaseCam && (
+                <button
+                  onClick={onToggleChaseCam}
+                  className={`mt-1 px-1.5 py-0.5 rounded-[2px] font-mono text-[8px] tracking-wider uppercase border transition-colors flex items-center gap-1 ${
+                    isChaseCam
+                      ? 'bg-[#ff8800]/20 border-[#ff8800] text-[#ff8800] shadow-[0_0_6px_#ff8800]'
+                      : 'bg-[#111] border-[#222] text-[#888] hover:text-[#ff8800]'
+                  }`}
+                  title={isChaseCam ? 'Unlock Chase Camera' : 'Lock Chase Camera on Asset'}
+                >
+                  <Crosshair className={`w-2.5 h-2.5 ${isChaseCam ? 'animate-spin' : ''}`} />
+                  <span>{isChaseCam ? 'CHASE LOCKED' : 'LOCK CAM'}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -254,6 +278,15 @@ export default function RightSidebar({
                   >
                     {isExecuting === 'NDVI_SCAN' ? 'SCANNING...' : 'TRIGGER NDVI SWEEP'}
                   </button>
+                  {onStartRoutePlanning && (
+                    <button
+                      onClick={onStartRoutePlanning}
+                      className="col-span-2 py-1.5 px-2 bg-[#00ff88]/15 border border-[#00ff88]/50 text-[#00ff88] hover:bg-[#00ff88]/25 rounded-[2px] font-mono text-[9px] font-bold tracking-wider text-center transition-colors flex items-center justify-center gap-1.5 shadow-[0_0_8px_rgba(0,255,136,0.2)]"
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>DRAW NEW FLIGHT CORRIDOR (MISSION PLANNER)</span>
+                    </button>
+                  )}
                 </>
               ) : selectedAsset.type === 'irrigation_node' ? (
                 <>
@@ -341,6 +374,15 @@ export default function RightSidebar({
               <Droplet className="w-3.5 h-3.5" />
               <span>{isExecuting === `irrigate-${selectedSector.id}` ? 'STARTING IRRIGATION...' : 'SCHEDULE DRIP IRRIGATION FOR SECTOR'}</span>
             </button>
+            {onExportSectorsGeoJson && (
+              <button
+                onClick={onExportSectorsGeoJson}
+                className="w-full mt-1.5 py-1.5 bg-[#111] border border-[#222] text-[#888] hover:text-[#00ff88] hover:border-[#00ff88]/40 rounded-[2px] font-mono text-[9px] font-bold tracking-wider text-center transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Download className="w-3 h-3" />
+                <span>EXPORT PARCELS AS GEOJSON</span>
+              </button>
+            )}
           </div>
         </div>
       ) : null}

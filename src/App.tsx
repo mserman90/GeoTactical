@@ -4,6 +4,7 @@ import LeftSidebar from './components/LeftSidebar';
 import MapView from './components/MapView';
 import RightSidebar from './components/RightSidebar';
 import BottomBar from './components/BottomBar';
+import TacticalAiModal from './components/TacticalAiModal';
 import { 
   Asset, 
   Sector, 
@@ -17,7 +18,8 @@ import {
   INITIAL_ASSETS, 
   INITIAL_SECTORS, 
   INITIAL_EVENTS, 
-  PRESET_LOCATIONS 
+  PRESET_LOCATIONS,
+  getRegionalData
 } from './data/mockData';
 import { soundManager } from './utils/audio';
 
@@ -32,6 +34,10 @@ export default function App() {
   const [currentPreset, setCurrentPreset] = useState<PresetLocation>(PRESET_LOCATIONS[0]);
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
+  const [isChaseCam, setIsChaseCam] = useState<boolean>(false);
+  const [isPlanningRoute, setIsPlanningRoute] = useState<boolean>(false);
+  const [planningWaypoints, setPlanningWaypoints] = useState<[number, number][]>([]);
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
 
   const [filters, setFilters] = useState<FilterSettings>({
     showDrones: true,
@@ -46,6 +52,11 @@ export default function App() {
   });
 
   const waypointStepRef = useRef<number>(0);
+  const assetsRef = useRef<Asset[]>(assets);
+
+  useEffect(() => {
+    assetsRef.current = assets;
+  }, [assets]);
 
   // Simulation loop: update drone and tractor coordinates, simulate live pings
   useEffect(() => {
@@ -57,8 +68,8 @@ export default function App() {
 
       setAssets((prev) =>
         prev.map((asset) => {
-          // Animate Recon Drone Alpha along its flight path
-          if (asset.id === 'UAV-ALPHA' && asset.status === 'active' && asset.waypoints && asset.waypoints.length > 0) {
+          // Animate any active drone along its flight path
+          if (asset.type === 'drone' && asset.status === 'active' && asset.waypoints && asset.waypoints.length > 0) {
             const numWp = asset.waypoints.length;
             const currentWpIndex = Math.floor(step / 6) % numWp;
             const nextWpIndex = (currentWpIndex + 1) % numWp;
@@ -87,7 +98,7 @@ export default function App() {
           }
 
           // Subtle update for tractor
-          if (asset.id === 'TRACTOR-01' && asset.status === 'active') {
+          if (asset.type === 'tractor' && asset.status === 'active') {
             const shiftLat = Math.sin(step * 0.1) * 0.00008;
             const shiftLng = Math.cos(step * 0.1) * 0.00012;
             return {
@@ -107,23 +118,25 @@ export default function App() {
       if (step % 9 === 0) {
         const now = new Date();
         const timeStr = now.toTimeString().substring(0, 8);
-        const randomDrone = assets.find((a) => a.id === 'UAV-ALPHA');
+        const randomDrone = assetsRef.current.find((a) => a.type === 'drone');
 
-        const newEvent: TelemetryEvent = {
-          id: `EVT-${Date.now().toString().slice(-4)}`,
-          timestamp: timeStr,
-          assetId: 'UAV-ALPHA',
-          assetName: 'Recon Drone Alpha',
-          severity: 'info',
-          message: `Periodic multispectral telemetry ping received. Sensor array at [${randomDrone?.lat.toFixed(4)}, ${randomDrone?.lng.toFixed(4)}].`
-        };
+        if (randomDrone) {
+          const newEvent: TelemetryEvent = {
+            id: `EVT-${Date.now().toString().slice(-4)}`,
+            timestamp: timeStr,
+            assetId: randomDrone.id,
+            assetName: randomDrone.name,
+            severity: 'info',
+            message: `Periodic multispectral telemetry ping received. Sensor array at [${randomDrone.lat.toFixed(4)}, ${randomDrone.lng.toFixed(4)}].`
+          };
 
-        setEvents((prev) => [newEvent, ...prev.slice(0, 29)]);
+          setEvents((prev) => [newEvent, ...prev.slice(0, 29)]);
+        }
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [isSimulating, assets]);
+  }, [isSimulating]);
 
   const handleSelectAsset = (asset: Asset) => {
     setSelectedAssetId(asset.id);
@@ -150,6 +163,12 @@ export default function App() {
 
   const handleSelectPreset = (preset: PresetLocation) => {
     setCurrentPreset(preset);
+    const regionData = getRegionalData(preset.id);
+    setSectors(regionData.sectors);
+    setAssets(regionData.assets);
+    setEvents(regionData.events);
+    setSelectedAssetId(regionData.assets[0]?.id || null);
+    setSelectedSectorId(null);
   };
 
   const handleResetView = () => {
@@ -229,6 +248,95 @@ export default function App() {
     setEvents((prev) => [newEvt, ...prev.slice(0, 29)]);
   };
 
+  const handleToggleChaseCam = () => {
+    soundManager.playClick();
+    setIsChaseCam((prev) => !prev);
+  };
+
+  const handleStartRoutePlanning = () => {
+    soundManager.playClick();
+    setIsPlanningRoute(true);
+    setPlanningWaypoints([]);
+  };
+
+  const handleAddPlanningWaypoint = (coord: [number, number]) => {
+    soundManager.playClick();
+    setPlanningWaypoints((prev) => [...prev, coord]);
+  };
+
+  const handleClearPlanningWaypoints = () => {
+    soundManager.playClick();
+    setPlanningWaypoints([]);
+  };
+
+  const handleCancelPlanningRoute = () => {
+    soundManager.playClick();
+    setIsPlanningRoute(false);
+    setPlanningWaypoints([]);
+  };
+
+  const handleDeployPlanningRoute = () => {
+    if (!selectedAssetId || planningWaypoints.length < 2) return;
+    const target = assets.find((a) => a.id === selectedAssetId);
+    setAssets((prev) =>
+      prev.map((a) =>
+        a.id === selectedAssetId
+          ? {
+              ...a,
+              waypoints: planningWaypoints,
+              status: 'active',
+              mission: `Custom Mission: ${planningWaypoints.length} Tactical Waypoints`,
+            }
+          : a
+      )
+    );
+
+    const now = new Date();
+    const timeStr = now.toTimeString().substring(0, 8);
+    const newEvt: TelemetryEvent = {
+      id: `EVT-${Date.now().toString().slice(-4)}`,
+      timestamp: timeStr,
+      assetId: selectedAssetId,
+      assetName: target?.name || 'Recon Drone',
+      severity: 'success',
+      message: `New tactical flight corridor assigned to ${target?.callsign}. Transmitted ${planningWaypoints.length} waypoints via encrypted telemetry link.`,
+    };
+    setEvents((prev) => [newEvt, ...prev.slice(0, 29)]);
+    setIsPlanningRoute(false);
+    setPlanningWaypoints([]);
+  };
+
+  const handleExportSectorsGeoJson = () => {
+    soundManager.playClick();
+    const geojson = {
+      type: 'FeatureCollection',
+      features: sectors.map((s) => ({
+        type: 'Feature',
+        properties: {
+          id: s.id,
+          name: s.name,
+          crop: s.crop,
+          areaHa: s.areaHa,
+          ndviHealth: s.ndviHealth,
+          soilMoisturePct: s.soilMoisturePct,
+          alertLevel: s.alertLevel,
+          irrigationStatus: s.irrigationStatus,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [s.polygon],
+        },
+      })),
+    };
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(geojson, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `sectors-${currentPreset.id}-${Date.now()}.geojson`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) || null;
   const selectedSector = sectors.find((s) => s.id === selectedSectorId) || null;
 
@@ -244,6 +352,7 @@ export default function App() {
         activeAssetCount={activeAssetCount}
         alertCount={alertCount}
         onResetView={handleResetView}
+        onOpenAiModal={() => setIsAiModalOpen(true)}
       />
 
       {/* Main workspace container: Left sidebar + Map canvas + Right details drawer */}
@@ -276,6 +385,15 @@ export default function App() {
           onSetWeatherMode={handleSetWeatherMode}
           mapStyle={mapStyle}
           currentPreset={currentPreset}
+          isChaseCam={isChaseCam}
+          onToggleChaseCam={handleToggleChaseCam}
+          isPlanningRoute={isPlanningRoute}
+          onTogglePlanningRoute={() => setIsPlanningRoute(!isPlanningRoute)}
+          planningWaypoints={planningWaypoints}
+          onAddPlanningWaypoint={handleAddPlanningWaypoint}
+          onClearPlanningWaypoints={handleClearPlanningWaypoints}
+          onCancelPlanningRoute={handleCancelPlanningRoute}
+          onDeployPlanningRoute={handleDeployPlanningRoute}
         />
 
         {/* Right real-time telemetry & log stream */}
@@ -289,6 +407,10 @@ export default function App() {
           onClearLogs={() => setEvents([])}
           isOpen={rightPanelOpen}
           onToggleOpen={() => setRightPanelOpen(!rightPanelOpen)}
+          isChaseCam={isChaseCam}
+          onToggleChaseCam={handleToggleChaseCam}
+          onStartRoutePlanning={handleStartRoutePlanning}
+          onExportSectorsGeoJson={handleExportSectorsGeoJson}
         />
       </div>
 
@@ -298,6 +420,18 @@ export default function App() {
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
         activeAssetCount={activeAssetCount}
         sectorCount={sectors.length}
+      />
+
+      {/* Tactical AI Copilot Modal */}
+      <TacticalAiModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        assets={assets}
+        sectors={sectors}
+        events={events}
+        regionName={currentPreset.name}
+        onTriggerAction={handleTriggerAction}
+        onTriggerSectorIrrigation={handleTriggerSectorIrrigation}
       />
     </div>
   );

@@ -120,6 +120,20 @@ class SoundManager {
       // ignore
     }
   }
+
+  public speakAlert(text: string) {
+    if (!this.enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 0.95;
+      utterance.volume = 0.75;
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

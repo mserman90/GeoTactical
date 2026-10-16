@@ -335,6 +335,30 @@ export default function LeftSidebar({
               <span>TACTICAL HUD RETICLE</span>
               {filters.showGridHUD ? <Eye className="w-3 h-3 text-[#00ff88]" /> : <EyeOff className="w-3 h-3 text-[#555]" />}
             </button>
+
+            <button
+              onClick={() => { soundManager.playClick(); onToggleFilter('showDrones'); }}
+              className="w-full flex items-center justify-between px-2 py-1 rounded-[2px] bg-[#0e0e0e] border border-[#1f1f1f] text-[#bbb] hover:border-[#333]"
+            >
+              <span>UAV RECON DRONES</span>
+              {filters.showDrones ? <Eye className="w-3 h-3 text-[#00ff88]" /> : <EyeOff className="w-3 h-3 text-[#555]" />}
+            </button>
+
+            <button
+              onClick={() => { soundManager.playClick(); onToggleFilter('showTractors'); }}
+              className="w-full flex items-center justify-between px-2 py-1 rounded-[2px] bg-[#0e0e0e] border border-[#1f1f1f] text-[#bbb] hover:border-[#333]"
+            >
+              <span>GROUND TRACTOR RIGS</span>
+              {filters.showTractors ? <Eye className="w-3 h-3 text-[#00ff88]" /> : <EyeOff className="w-3 h-3 text-[#555]" />}
+            </button>
+
+            <button
+              onClick={() => { soundManager.playClick(); onToggleFilter('showSensors'); }}
+              className="w-full flex items-center justify-between px-2 py-1 rounded-[2px] bg-[#0e0e0e] border border-[#1f1f1f] text-[#bbb] hover:border-[#333]"
+            >
+              <span>IOT SOIL & VALVES</span>
+              {filters.showSensors ? <Eye className="w-3 h-3 text-[#00ff88]" /> : <EyeOff className="w-3 h-3 text-[#555]" />}
+            </button>
           </div>
         )}
       </div>

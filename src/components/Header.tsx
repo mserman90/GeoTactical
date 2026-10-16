@@ -9,7 +9,8 @@ import {
   Maximize, 
   ShieldAlert, 
   Activity,
-  Cpu
+  Cpu,
+  Bot
 } from 'lucide-react';
 import { MapStyleMode } from '../types';
 import { soundManager } from '../utils/audio';
@@ -20,6 +21,7 @@ interface HeaderProps {
   activeAssetCount: number;
   alertCount: number;
   onResetView: () => void;
+  onOpenAiModal?: () => void;
 }
 
 export default function Header({
@@ -28,6 +30,7 @@ export default function Header({
   activeAssetCount,
   alertCount,
   onResetView,
+  onOpenAiModal,
 }: HeaderProps) {
   const [timeStr, setTimeStr] = useState<string>('');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
@@ -119,6 +122,21 @@ export default function Header({
 
       {/* Right controls */}
       <div className="flex items-center gap-2">
+        {/* AI Tactical Copilot */}
+        {onOpenAiModal && (
+          <button
+            onClick={() => {
+              soundManager.playClick();
+              onOpenAiModal();
+            }}
+            className="px-2 py-1 bg-[#00ff88]/15 border border-[#00ff88]/50 text-[#00ff88] hover:bg-[#00ff88]/25 rounded-[2px] font-mono text-[10px] font-bold tracking-wider transition-colors flex items-center gap-1.5 shadow-[0_0_8px_rgba(0,255,136,0.25)]"
+            title="Open ARES-AGRI AI Copilot"
+          >
+            <Bot className="w-3.5 h-3.5 animate-pulse text-[#00ff88]" />
+            <span className="hidden md:inline">AI COPILOT</span>
+          </button>
+        )}
+
         {/* Style selector pills */}
         <div className="flex items-center bg-[#0e0e0e] p-0.5 border border-[#222] rounded-[2px]">
           <button
