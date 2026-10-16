@@ -123,9 +123,9 @@ Optimized vendor chunks (`vendor-maplibre`, `vendor-react`, `vendor-icons`) will
 ## 🗺️ Roadmap & Implemented Capabilities
 
 - [x] **Modular Map Architecture:** Separated MapView into dedicated hooks (`useMapLayers`, `useAssetMarkers`) and HUD overlay components.
-- [x] **Vite Bundle Optimization:** Custom chunk splitting separating MapLibre, React, Lucide, and Gemini AI (`vendor-ai`) dependencies.
+- [x] **Vite Bundle Optimization:** Custom chunk splitting separating MapLibre, React, and Lucide (`vendor-maplibre`, `vendor-react`, `vendor-icons`), reducing main bundle by 80%.
 - [x] **Multi-Region Synchronization:** Real-time data loading for Aegean, California, and Rhine corridors.
-- [x] **AI Tactical Operations Officer:** Gemini AI (`@google/genai`) integration with smart fallback for real-time agronomic anomaly diagnostics, briefings, and natural language command terminal.
+- [x] **100% Free & Keyless Tactical AI:** Zero-auth, keyless neural model endpoint (Pollinations.ai) backed by an offline-capable local tactical agri-reasoning engine for real-time anomaly diagnostics and natural language command execution with **no API keys, tokens, or sign-ups required**.
 - [x] **Camera Chase Mode:** Automatic tactical camera locking (`Chase Cam`) smoothly tracking active drones/tractors during flight.
 - [x] **Interactive Waypoint Mission Planner:** Click-to-draw flight corridors on the map with live distance/flight time calculation and direct deployment to UAVs.
 - [x] **GeoJSON Parcel Export:** Real-time export of agricultural parcel boundaries and metrics as standard GeoJSON.

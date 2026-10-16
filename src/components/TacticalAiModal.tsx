@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, Sparkles, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Asset, Sector, TelemetryEvent } from '../types';
-import { queryTacticalAI } from '../services/geminiService';
+import { queryTacticalAI } from '../services/aiService';
 import { soundManager } from '../utils/audio';
 
 interface TacticalAiModalProps {
@@ -134,8 +134,8 @@ export default function TacticalAiModal({
               <span className="text-[#00ff88] font-black text-[11px] tracking-widest">
                 ARES-AGRI // TACTICAL AI COPILOT
               </span>
-              <span className="text-[#557] text-[8.5px] ml-2 hidden sm:inline">
-                GEMINI-POWERED TELEMETRY INTELLIGENCE
+              <span className="text-[#00e5ff] text-[8.5px] ml-2 hidden sm:inline font-bold">
+                ● FREE & KEYLESS AUTONOMOUS INTELLIGENCE
               </span>
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function TacticalAiModal({
           {loading && (
             <div className="p-2 bg-[#061210] border border-[#00ff88]/30 rounded-[2px] text-[9.5px] text-[#00ff88] flex items-center gap-2 animate-pulse mr-8">
               <Bot className="w-3.5 h-3.5" />
-              <span>Analyzing live telemetry array through Gemini neural model...</span>
+              <span>Analyzing live telemetry array through neural tactical model...</span>
             </div>
           )}
           <div ref={messagesEndRef} />

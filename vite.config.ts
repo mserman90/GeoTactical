@@ -27,7 +27,6 @@ export default defineConfig(() => {
             'vendor-maplibre': ['maplibre-gl'],
             'vendor-react': ['react', 'react-dom'],
             'vendor-icons': ['lucide-react'],
-            'vendor-ai': ['@google/genai'],
           },
         },
       },
