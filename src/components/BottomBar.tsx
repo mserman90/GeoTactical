@@ -59,8 +59,9 @@ export default function BottomBar({
           <span className="text-[#00ff88]">{activeAssetCount} TARGETS EN ROUTE</span>
         </div>
 
-        <div className="text-[#555] hidden sm:inline">
-          AES-256 GCM SECURED
+        <div className="hidden sm:flex items-center gap-1.5 text-[#00ff88]/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]" />
+          <span>100% FREE & KEYLESS GIS</span>
         </div>
       </div>
     </footer>

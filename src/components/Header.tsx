@@ -10,7 +10,9 @@ import {
   ShieldAlert, 
   Activity,
   Cpu,
-  Bot
+  Bot,
+  Mountain,
+  Map
 } from 'lucide-react';
 import { MapStyleMode } from '../types';
 import { soundManager } from '../utils/audio';
@@ -137,8 +139,8 @@ export default function Header({
           </button>
         )}
 
-        {/* Style selector pills */}
-        <div className="flex items-center bg-[#0e0e0e] p-0.5 border border-[#222] rounded-[2px]">
+        {/* Free & Keyless Basemap Selector */}
+        <div className="flex items-center bg-[#0e0e0e] p-0.5 border border-[#222] rounded-[2px]" title="100% Free & Keyless GIS Basemaps">
           <button
             onClick={() => { soundManager.playClick(); onStyleChange('tactical_dark'); }}
             className={`px-2 py-1 text-[10px] font-mono tracking-wider rounded-[2px] transition-colors flex items-center gap-1 ${
@@ -146,10 +148,10 @@ export default function Header({
                 ? 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/40 shadow-[0_0_8px_#00ff88]'
                 : 'text-[#888] hover:text-[#ccc]'
             }`}
-            title="Tactical Dark Vector Map"
+            title="Carto Dark Matter (100% Free & Keyless)"
           >
             <Layers className="w-3 h-3" />
-            <span className="hidden md:inline">TACTICAL</span>
+            <span className="hidden lg:inline">DARK</span>
           </button>
 
           <button
@@ -159,10 +161,36 @@ export default function Header({
                 ? 'bg-[#ff8800]/20 text-[#ff8800] border border-[#ff8800]/50 shadow-[0_0_10px_rgba(255,136,0,0.4)]'
                 : 'text-[#888] hover:text-[#ccc]'
             }`}
-            title="Satellite Recon Aerial Imagery"
+            title="ESRI World Imagery Satellite (100% Free & Keyless)"
           >
             <Satellite className="w-3 h-3" />
-            <span className="hidden md:inline">SATELLITE</span>
+            <span className="hidden lg:inline">SATELLITE</span>
+          </button>
+
+          <button
+            onClick={() => { soundManager.playClick(); onStyleChange('terrain_topo'); }}
+            className={`px-2 py-1 text-[10px] font-mono tracking-wider rounded-[2px] transition-colors flex items-center gap-1 ${
+              mapStyle === 'terrain_topo'
+                ? 'bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/50 shadow-[0_0_10px_rgba(0,212,255,0.4)]'
+                : 'text-[#888] hover:text-[#ccc]'
+            }`}
+            title="ESRI World Topo Elevation & Relief (100% Free & Keyless)"
+          >
+            <Mountain className="w-3 h-3" />
+            <span className="hidden lg:inline">TOPO</span>
+          </button>
+
+          <button
+            onClick={() => { soundManager.playClick(); onStyleChange('osm_standard'); }}
+            className={`px-2 py-1 text-[10px] font-mono tracking-wider rounded-[2px] transition-colors flex items-center gap-1 ${
+              mapStyle === 'osm_standard'
+                ? 'bg-[#a3e635]/20 text-[#a3e635] border border-[#a3e635]/50 shadow-[0_0_10px_rgba(163,230,53,0.4)]'
+                : 'text-[#888] hover:text-[#ccc]'
+            }`}
+            title="OpenStreetMap Standard (100% Free, Open-Source & Keyless)"
+          >
+            <Map className="w-3 h-3" />
+            <span className="hidden lg:inline">OSM</span>
           </button>
         </div>
 

@@ -3,7 +3,7 @@ import * as maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Asset, Sector, FilterSettings, MapStyleMode, PresetLocation, WeatherLayerMode } from '../types';
 import { soundManager } from '../utils/audio';
-import { TACTICAL_DARK_STYLE, SATELLITE_RECON_STYLE } from './map/mapStyles';
+import { getMapStyle } from './map/mapStyles';
 import TacticalHudOverlay from './map/TacticalHudOverlay';
 import WeatherTelemetryHud from './map/WeatherTelemetryHud';
 import MapControls from './map/MapControls';
@@ -85,7 +85,7 @@ export default function MapView({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    const initialStyle = mapStyle === 'satellite_recon' ? SATELLITE_RECON_STYLE : TACTICAL_DARK_STYLE;
+    const initialStyle = getMapStyle(mapStyle);
 
     const mapInstance = new maplibregl.Map({
       container: mapContainerRef.current,
@@ -158,7 +158,7 @@ export default function MapView({
   useEffect(() => {
     if (!map) return;
 
-    const targetStyle = mapStyle === 'satellite_recon' ? SATELLITE_RECON_STYLE : TACTICAL_DARK_STYLE;
+    const targetStyle = getMapStyle(mapStyle);
     map.setStyle(targetStyle);
 
     map.once('style.load', () => {
@@ -262,6 +262,7 @@ export default function MapView({
         zoom={zoom}
         pitch={pitch}
         bearing={bearing}
+        mapStyle={mapStyle}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onResetBearing={handleResetBearing}

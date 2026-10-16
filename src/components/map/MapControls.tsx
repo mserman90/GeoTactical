@@ -1,10 +1,12 @@
 import { Plus, Minus, Compass, Crosshair, Navigation } from 'lucide-react';
 import { soundManager } from '../../utils/audio';
+import { MapStyleMode } from '../../types';
 
 interface MapControlsProps {
   zoom: number;
   pitch: number;
   bearing: number;
+  mapStyle?: MapStyleMode;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetBearing: () => void;
@@ -21,6 +23,7 @@ export default function MapControls({
   zoom,
   pitch,
   bearing,
+  mapStyle,
   onZoomIn,
   onZoomOut,
   onResetBearing,
@@ -115,6 +118,17 @@ export default function MapControls({
           <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]" />
           <span className="text-[#00ff88] font-bold">WGS-84</span>
         </span>
+        {mapStyle && (
+          <span className="hidden sm:inline text-[#00d4ff] font-bold">
+            {mapStyle === 'tactical_dark'
+              ? 'CARTO DARK'
+              : mapStyle === 'satellite_recon'
+              ? 'ESRI SATELLITE'
+              : mapStyle === 'terrain_topo'
+              ? 'ESRI TOPO'
+              : 'OSM MAP'}
+          </span>
+        )}
         {isChaseCam && (
           <span className="text-[#ff8800] font-bold animate-pulse">CHASE LOCK</span>
         )}

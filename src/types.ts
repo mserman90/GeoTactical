@@ -49,7 +49,7 @@ export interface TelemetryEvent {
   coords?: [number, number];
 }
 
-export type MapStyleMode = 'tactical_dark' | 'satellite_recon' | 'monochrome_radar';
+export type MapStyleMode = 'tactical_dark' | 'satellite_recon' | 'terrain_topo' | 'osm_standard';
 
 export type WeatherLayerMode = 'precipitation' | 'wind';
 

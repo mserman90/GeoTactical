@@ -397,6 +397,20 @@ export default function LeftSidebar({
           </div>
         )}
       </div>
+
+      {/* Free & Keyless GIS Status */}
+      <div className="border-t border-[#1a1a1a] p-2 bg-[#080808]">
+        <div className="flex items-center justify-between text-[8.5px] font-mono">
+          <span className="flex items-center gap-1.5 text-[#00ff88] font-bold tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] shadow-[0_0_6px_#00ff88]" />
+            KEYLESS GIS
+          </span>
+          <span className="text-[#666] tracking-widest text-[8px]">MAPLIBRE GL v6</span>
+        </div>
+        <div className="text-[7.5px] font-mono text-[#555] mt-0.5 tracking-wider">
+          CARTO • ESRI • TOPO • OSM
+        </div>
+      </div>
     </aside>
   );
 }
