@@ -2,6 +2,36 @@
   "name": "geotactical",
   "private": true,
   "version": "1.0.0",
+  "description": "Tactical geospatial surveillance and precision agri-telemetry console with live radar tracking, sensor networks, and zone analysis powered by MapLibre GL.",
+  "homepage": "https://mserman90.github.io/GeoTactical/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mserman90/GeoTactical.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mserman90/GeoTactical/issues"
+  },
+  "license": "MIT",
+  "author": "mserman90 (https://github.com/mserman90)",
+  "keywords": [
+    "maplibre",
+    "maplibre-gl",
+    "openfreemap",
+    "gis",
+    "geospatial",
+    "telemetry",
+    "precision-agriculture",
+    "drone-tracking",
+    "uav",
+    "radar",
+    "doppler-radar",
+    "react",
+    "react19",
+    "typescript",
+    "vite",
+    "tactical-hud",
+    "web-audio-api"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
