@@ -16,7 +16,8 @@ import {
   MapPin,
   Compass,
   CloudRain,
-  Wind
+  Wind,
+  Activity
 } from 'lucide-react';
 import { Asset, FilterSettings, PresetLocation, Sector, WeatherLayerMode } from '../types';
 import { soundManager } from '../utils/audio';
@@ -34,6 +35,7 @@ interface LeftSidebarProps {
   presetLocations: PresetLocation[];
   currentPresetId: string;
   onSelectPreset: (preset: PresetLocation) => void;
+  earthquakeCount?: number;
 }
 
 export default function LeftSidebar({
@@ -48,7 +50,8 @@ export default function LeftSidebar({
   onSetWeatherMode,
   presetLocations,
   currentPresetId,
-  onSelectPreset
+  onSelectPreset,
+  earthquakeCount = 0,
 }: LeftSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'air' | 'ground' | 'sensor'>('all');
@@ -262,6 +265,28 @@ export default function LeftSidebar({
 
         {layersOpen && (
           <div className="mt-1.5 space-y-1 text-[9px] font-mono">
+            {/* Live AFAD Seismic Activity Layer Toggle */}
+            <button
+              onClick={() => { soundManager.playClick(); onToggleFilter('showEarthquakes'); }}
+              className={`w-full flex items-center justify-between px-2 py-1.5 rounded-[2px] border transition-colors ${
+                filters.showEarthquakes
+                  ? 'bg-[#ff8800]/20 border-[#ff8800]/60 text-[#ff8800] shadow-[0_0_8px_rgba(255,136,0,0.25)]'
+                  : 'bg-[#0e0e0e] border-[#1f1f1f] text-[#bbb] hover:border-[#333]'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <Activity className={`w-3 h-3 ${filters.showEarthquakes ? 'text-[#ff8800] animate-pulse' : 'text-[#666]'}`} />
+                <span className="font-bold">AFAD SEISMIC GRID</span>
+                {earthquakeCount > 0 && (
+                  <span className="text-[7.5px] px-1 py-0.2 bg-[#ff8800]/20 text-[#ff8800] rounded-[2px]">
+                    {earthquakeCount}
+                  </span>
+                )}
+              </span>
+              {filters.showEarthquakes ? <Eye className="w-3 h-3 text-[#ff8800]" /> : <EyeOff className="w-3 h-3 text-[#555]" />}
+            </button>
+
+            {/* Weather Heatmap Toggle */}
             <div className="space-y-1 pt-1 border-t border-[#1f1f1f]/80">
               <button
                 onClick={() => { soundManager.playClick(); onToggleFilter('showWeatherLayer'); }}
@@ -408,7 +433,7 @@ export default function LeftSidebar({
           <span className="text-[#666] tracking-widest text-[8px]">MAPLIBRE GL v6</span>
         </div>
         <div className="text-[7.5px] font-mono text-[#555] mt-0.5 tracking-wider">
-          OPENFREEMAP • ESRI • TOPO • OSM
+          OPENFREEMAP • ESRI • TOPO • AFAD • OSM
         </div>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl';
-import { Asset, Sector, FilterSettings, PresetLocation } from '../../types';
+import { Asset, Sector, FilterSettings, PresetLocation, EarthquakeEvent } from '../../types';
 import { generateWeatherGrid } from '../../data/weatherData';
 import { soundManager } from '../../utils/audio';
 
@@ -12,6 +12,8 @@ interface UseMapLayersProps {
   filters: FilterSettings;
   currentPreset: PresetLocation;
   draftWaypoints?: [number, number][];
+  earthquakes?: EarthquakeEvent[];
+  onSelectEarthquake?: (quake: EarthquakeEvent) => void;
 }
 
 export function useMapLayers({
@@ -22,6 +24,8 @@ export function useMapLayers({
   filters,
   currentPreset,
   draftWaypoints = [],
+  earthquakes = [],
+  onSelectEarthquake,
 }: UseMapLayersProps) {
   const weatherTimeRef = useRef<number>(0);
   const [weatherStats, setWeatherStats] = useState({
@@ -297,8 +301,142 @@ export function useMapLayers({
           },
         });
       }
+
+      // 4. Add Live AFAD / Regional Earthquake Layers
+      const quakeFeatures = (earthquakes || []).map((q) => ({
+        type: 'Feature' as const,
+        properties: {
+          id: q.id,
+          magnitude: q.magnitude,
+          depth: q.depth,
+          location: q.location,
+          time: q.time,
+          provider: q.provider,
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [q.lng, q.lat],
+        },
+      }));
+
+      if (!mapInstance.getSource('earthquakes-source')) {
+        mapInstance.addSource('earthquakes-source', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: quakeFeatures,
+          },
+        });
+
+        // Pulsing / Blurred Glow Circle
+        mapInstance.addLayer({
+          id: 'earthquakes-glow',
+          type: 'circle',
+          source: 'earthquakes-source',
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['get', 'magnitude'],
+              1, 8,
+              2.5, 16,
+              4.0, 28,
+              6.0, 48,
+            ],
+            'circle-color': [
+              'case',
+              ['>=', ['get', 'magnitude'], 4.0], '#ff0033',
+              ['>=', ['get', 'magnitude'], 2.5], '#ff8800',
+              '#00ff88',
+            ],
+            'circle-opacity': 0.25,
+            'circle-blur': 0.8,
+          },
+          layout: {
+            visibility: filters.showEarthquakes ? 'visible' : 'none',
+          },
+        });
+
+        // Shockwave Outline Ring
+        mapInstance.addLayer({
+          id: 'earthquakes-outer',
+          type: 'circle',
+          source: 'earthquakes-source',
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['get', 'magnitude'],
+              1, 6,
+              2.5, 12,
+              4.0, 22,
+              6.0, 36,
+            ],
+            'circle-color': 'transparent',
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': [
+              'case',
+              ['>=', ['get', 'magnitude'], 4.0], '#ff0033',
+              ['>=', ['get', 'magnitude'], 2.5], '#ff8800',
+              '#00ff88',
+            ],
+            'circle-stroke-opacity': 0.85,
+          },
+          layout: {
+            visibility: filters.showEarthquakes ? 'visible' : 'none',
+          },
+        });
+
+        // Focal Epicenter Center Dot
+        mapInstance.addLayer({
+          id: 'earthquakes-center',
+          type: 'circle',
+          source: 'earthquakes-source',
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['get', 'magnitude'],
+              1, 3.5,
+              2.5, 5.0,
+              4.0, 7.5,
+              6.0, 11,
+            ],
+            'circle-color': [
+              'case',
+              ['>=', ['get', 'magnitude'], 4.0], '#ff0033',
+              ['>=', ['get', 'magnitude'], 2.5], '#ff8800',
+              '#00ff88',
+            ],
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#ffffff',
+          },
+          layout: {
+            visibility: filters.showEarthquakes ? 'visible' : 'none',
+          },
+        });
+
+        // Click interaction on earthquake epicenters
+        mapInstance.on('click', 'earthquakes-center', (e) => {
+          if (!e.features || !e.features[0]) return;
+          const feat = e.features[0];
+          const quakeId = feat.properties?.id;
+          const found = earthquakes.find((q) => q.id === quakeId);
+          if (found && onSelectEarthquake) {
+            soundManager.playTargetAcquired();
+            onSelectEarthquake(found);
+          }
+        });
+
+        mapInstance.on('mouseenter', 'earthquakes-center', () => {
+          mapInstance.getCanvas().style.cursor = 'pointer';
+        });
+        mapInstance.on('mouseleave', 'earthquakes-center', () => {
+          mapInstance.getCanvas().style.cursor = '';
+        });
+      }
     },
-    [sectors, assets, currentPreset.center, filters.showWeatherLayer, filters.weatherLayerMode, onSelectSector]
+    [sectors, assets, currentPreset.center, filters.showWeatherLayer, filters.weatherLayerMode, filters.showEarthquakes, onSelectSector, earthquakes, onSelectEarthquake]
   );
 
   // Sync layer visibility based on filters
@@ -341,10 +479,21 @@ export function useMapLayers({
           filters.showWeatherLayer && filters.weatherLayerMode === 'wind' ? 'visible' : 'none'
         );
       }
+
+      // Earthquake Layers visibility sync
+      if (map.getLayer('earthquakes-glow')) {
+        map.setLayoutProperty('earthquakes-glow', 'visibility', filters.showEarthquakes ? 'visible' : 'none');
+      }
+      if (map.getLayer('earthquakes-outer')) {
+        map.setLayoutProperty('earthquakes-outer', 'visibility', filters.showEarthquakes ? 'visible' : 'none');
+      }
+      if (map.getLayer('earthquakes-center')) {
+        map.setLayoutProperty('earthquakes-center', 'visibility', filters.showEarthquakes ? 'visible' : 'none');
+      }
     } catch {
       // ignore
     }
-  }, [map, filters.showSectors, filters.showFlightPaths, filters.showWeatherLayer, filters.weatherLayerMode]);
+  }, [map, filters.showSectors, filters.showFlightPaths, filters.showWeatherLayer, filters.weatherLayerMode, filters.showEarthquakes]);
 
   // Periodic weather drift animation
   useEffect(() => {
@@ -362,7 +511,7 @@ export function useMapLayers({
           stormHeading: data.stormCellHeading,
         });
       }
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [filters.showWeatherLayer, currentPreset, map]);
@@ -473,6 +622,33 @@ export function useMapLayers({
       });
     }
   }, [map, draftWaypoints]);
+
+  // Synchronize earthquake GeoJSON source dynamically
+  useEffect(() => {
+    if (!map) return;
+    const source = map.getSource('earthquakes-source') as GeoJSONSource | undefined;
+    if (source && typeof source.setData === 'function') {
+      const quakeFeatures = (earthquakes || []).map((q) => ({
+        type: 'Feature' as const,
+        properties: {
+          id: q.id,
+          magnitude: q.magnitude,
+          depth: q.depth,
+          location: q.location,
+          time: q.time,
+          provider: q.provider,
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [q.lng, q.lat],
+        },
+      }));
+      source.setData({
+        type: 'FeatureCollection',
+        features: quakeFeatures,
+      });
+    }
+  }, [map, earthquakes]);
 
   return {
     initLayers,

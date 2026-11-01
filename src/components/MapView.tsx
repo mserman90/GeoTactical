@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Asset, Sector, FilterSettings, MapStyleMode, PresetLocation, WeatherLayerMode } from '../types';
+import { Asset, Sector, FilterSettings, MapStyleMode, PresetLocation, WeatherLayerMode, EarthquakeEvent } from '../types';
 import { soundManager } from '../utils/audio';
 import { getMapStyle } from './map/mapStyles';
 import TacticalHudOverlay from './map/TacticalHudOverlay';
 import WeatherTelemetryHud from './map/WeatherTelemetryHud';
+import EarthquakeTelemetryHud from './map/EarthquakeTelemetryHud';
 import MapControls from './map/MapControls';
 import WaypointPlannerHud from './map/WaypointPlannerHud';
 import { useAssetMarkers } from './map/useAssetMarkers';
@@ -31,6 +32,11 @@ interface MapViewProps {
   onClearPlanningWaypoints: () => void;
   onCancelPlanningRoute: () => void;
   onDeployPlanningRoute: () => void;
+  earthquakes?: EarthquakeEvent[];
+  selectedEarthquake?: EarthquakeEvent | null;
+  onSelectEarthquake?: (quake: EarthquakeEvent) => void;
+  onRefreshEarthquakes?: () => void;
+  isLoadingEarthquakes?: boolean;
 }
 
 export default function MapView({
@@ -52,6 +58,11 @@ export default function MapView({
   onClearPlanningWaypoints,
   onCancelPlanningRoute,
   onDeployPlanningRoute,
+  earthquakes = [],
+  selectedEarthquake = null,
+  onSelectEarthquake = () => {},
+  onRefreshEarthquakes = () => {},
+  isLoadingEarthquakes = false,
 }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -70,6 +81,8 @@ export default function MapView({
     filters,
     currentPreset,
     draftWaypoints: planningWaypoints,
+    earthquakes,
+    onSelectEarthquake,
   });
 
   // Manage tactical DOM markers on the map
@@ -199,6 +212,17 @@ export default function MapView({
     }
   }, [selectedAsset?.lng, selectedAsset?.lat, isChaseCam, map]);
 
+  // Pan to selected earthquake epicenter
+  useEffect(() => {
+    if (!map || !selectedEarthquake) return;
+    map.easeTo({
+      center: [selectedEarthquake.lng, selectedEarthquake.lat],
+      zoom: Math.max(map.getZoom(), 8.5),
+      duration: 1200,
+      essential: true,
+    });
+  }, [selectedEarthquake, map]);
+
   // Controls Handlers
   const handleZoomIn = () => {
     soundManager.playClick();
@@ -255,6 +279,16 @@ export default function MapView({
         weatherLayerMode={filters.weatherLayerMode}
         onSetWeatherMode={onSetWeatherMode}
         weatherStats={weatherStats}
+      />
+
+      {/* On-Map Live AFAD Seismic Activity HUD */}
+      <EarthquakeTelemetryHud
+        showEarthquakes={filters.showEarthquakes}
+        earthquakes={earthquakes}
+        selectedEarthquake={selectedEarthquake}
+        onSelectEarthquake={onSelectEarthquake}
+        onRefresh={onRefreshEarthquakes}
+        isLoading={isLoadingEarthquakes}
       />
 
       {/* Map Control Buttons & Coordinates HUD */}

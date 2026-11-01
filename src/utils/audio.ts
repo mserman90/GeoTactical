@@ -121,6 +121,45 @@ class SoundManager {
     }
   }
 
+  public playSeismicAlert() {
+    if (!this.enabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Sub-harmonic oscillator simulating low subterranean vibration
+      const sub = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      sub.type = 'triangle';
+      sub.frequency.setValueAtTime(80, now);
+      sub.frequency.exponentialRampToValueAtTime(38, now + 0.35);
+      subGain.gain.setValueAtTime(0.08, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      sub.connect(subGain);
+      subGain.connect(ctx.destination);
+      sub.start(now);
+      sub.stop(now + 0.35);
+
+      // Warning chime
+      const chime = ctx.createOscillator();
+      const chimeGain = ctx.createGain();
+      chime.type = 'sine';
+      chime.frequency.setValueAtTime(440, now + 0.1);
+      chime.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+      chimeGain.gain.setValueAtTime(0.04, now + 0.1);
+      chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      chime.connect(chimeGain);
+      chimeGain.connect(ctx.destination);
+      chime.start(now + 0.1);
+      chime.stop(now + 0.35);
+    } catch {
+      // ignore
+    }
+  }
+
   public speakAlert(text: string) {
     if (!this.enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {

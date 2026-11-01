@@ -12,7 +12,8 @@ import {
   FilterSettings, 
   MapStyleMode, 
   PresetLocation,
-  WeatherLayerMode 
+  WeatherLayerMode,
+  EarthquakeEvent
 } from './types';
 import { 
   INITIAL_ASSETS, 
@@ -22,6 +23,7 @@ import {
   getRegionalData
 } from './data/mockData';
 import { soundManager } from './utils/audio';
+import { fetchLiveEarthquakes } from './services/earthquakeService';
 
 export default function App() {
   const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
@@ -29,6 +31,9 @@ export default function App() {
   const [events, setEvents] = useState<TelemetryEvent[]>(INITIAL_EVENTS);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>('UAV-ALPHA');
   const [selectedSectorId, setSelectedSectorId] = useState<string | null>(null);
+  const [selectedEarthquake, setSelectedEarthquake] = useState<EarthquakeEvent | null>(null);
+  const [earthquakes, setEarthquakes] = useState<EarthquakeEvent[]>([]);
+  const [isLoadingEarthquakes, setIsLoadingEarthquakes] = useState<boolean>(false);
   
   const [mapStyle, setMapStyle] = useState<MapStyleMode>('tactical_dark');
   const [currentPreset, setCurrentPreset] = useState<PresetLocation>(PRESET_LOCATIONS[0]);
@@ -48,7 +53,8 @@ export default function App() {
     showRadarSweep: true,
     showGridHUD: true,
     showWeatherLayer: true,
-    weatherLayerMode: 'precipitation'
+    weatherLayerMode: 'precipitation',
+    showEarthquakes: true,
   });
 
   const waypointStepRef = useRef<number>(0);
@@ -57,6 +63,44 @@ export default function App() {
   useEffect(() => {
     assetsRef.current = assets;
   }, [assets]);
+
+  // Live AFAD & Kandilli seismic feed polling (every 60s)
+  const refreshEarthquakes = async () => {
+    setIsLoadingEarthquakes(true);
+    try {
+      const quakes = await fetchLiveEarthquakes(45);
+      setEarthquakes(quakes);
+
+      // Check for notable tremor (M >= 3.5) and alert
+      const notable = quakes.find((q) => q.magnitude >= 3.5);
+      if (notable) {
+        setEvents((prev) => {
+          if (prev.some((e) => e.id === `EQ-${notable.id}`)) return prev;
+          soundManager.playSeismicAlert();
+          const now = new Date();
+          const timeStr = now.toTimeString().substring(0, 8);
+          const newEvt: TelemetryEvent = {
+            id: `EQ-${notable.id}`,
+            timestamp: timeStr,
+            assetName: `AFAD SEISMIC MONITOR`,
+            severity: 'alert',
+            message: `SEISMIC ALERT: M${notable.magnitude.toFixed(1)} detected at ${notable.location} (Depth: ${notable.depth}km, Origin: ${notable.provider}).`,
+          };
+          return [newEvt, ...prev.slice(0, 29)];
+        });
+      }
+    } catch (err) {
+      console.warn('Live seismic ingestion error:', err);
+    } finally {
+      setIsLoadingEarthquakes(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshEarthquakes();
+    const interval = setInterval(refreshEarthquakes, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Simulation loop: update drone and tractor coordinates, simulate live pings
   useEffect(() => {
@@ -141,16 +185,65 @@ export default function App() {
   const handleSelectAsset = (asset: Asset) => {
     setSelectedAssetId(asset.id);
     setSelectedSectorId(null);
+    setSelectedEarthquake(null);
   };
 
   const handleSelectSector = (sector: Sector) => {
     setSelectedSectorId(sector.id);
     setSelectedAssetId(null);
+    setSelectedEarthquake(null);
+  };
+
+  const handleSelectEarthquake = (quake: EarthquakeEvent) => {
+    setSelectedEarthquake(quake);
+    setSelectedAssetId(null);
+    setSelectedSectorId(null);
+  };
+
+  const handleClearEarthquake = () => {
+    setSelectedEarthquake(null);
   };
 
   const handleClearSelection = () => {
     setSelectedAssetId(null);
     setSelectedSectorId(null);
+    setSelectedEarthquake(null);
+  };
+
+  const handleDispatchReconToQuake = (quake: EarthquakeEvent) => {
+    const drone = assets.find((a) => a.type === 'drone');
+    if (!drone) return;
+
+    setSelectedAssetId(drone.id);
+    setSelectedEarthquake(null);
+
+    const now = new Date();
+    const timeStr = now.toTimeString().substring(0, 8);
+    const newEvt: TelemetryEvent = {
+      id: `EVT-${Date.now().toString().slice(-4)}`,
+      timestamp: timeStr,
+      assetId: drone.id,
+      assetName: drone.name,
+      severity: 'warning',
+      message: `RECON FLIGHT VECTOR ASSIGNED: Dispatching ${drone.callsign} to seismic epicenter at ${quake.location} [LAT: ${quake.lat.toFixed(4)}, LNG: ${quake.lng.toFixed(4)}].`,
+    };
+    setEvents((prev) => [newEvt, ...prev.slice(0, 29)]);
+
+    setAssets((prev) =>
+      prev.map((a) =>
+        a.id === drone.id
+          ? {
+              ...a,
+              status: 'active',
+              mission: `Seismic Recon - Epicenter ${quake.location}`,
+              waypoints: [
+                [a.lng, a.lat],
+                [quake.lng, quake.lat],
+              ],
+            }
+          : a
+      )
+    );
   };
 
   const handleToggleFilter = <K extends keyof FilterSettings>(key: K) => {
@@ -169,6 +262,7 @@ export default function App() {
     setEvents(regionData.events);
     setSelectedAssetId(regionData.assets[0]?.id || null);
     setSelectedSectorId(null);
+    setSelectedEarthquake(null);
   };
 
   const handleResetView = () => {
@@ -371,6 +465,7 @@ export default function App() {
           presetLocations={PRESET_LOCATIONS}
           currentPresetId={currentPreset.id}
           onSelectPreset={handleSelectPreset}
+          earthquakeCount={earthquakes.length}
         />
 
         {/* Center MapLibre GL instance */}
@@ -394,13 +489,21 @@ export default function App() {
           onClearPlanningWaypoints={handleClearPlanningWaypoints}
           onCancelPlanningRoute={handleCancelPlanningRoute}
           onDeployPlanningRoute={handleDeployPlanningRoute}
+          earthquakes={earthquakes}
+          selectedEarthquake={selectedEarthquake}
+          onSelectEarthquake={handleSelectEarthquake}
+          onRefreshEarthquakes={refreshEarthquakes}
+          isLoadingEarthquakes={isLoadingEarthquakes}
         />
 
         {/* Right real-time telemetry & log stream */}
         <RightSidebar
           selectedAsset={selectedAsset}
           selectedSector={selectedSector}
+          selectedEarthquake={selectedEarthquake}
           onClearSelection={handleClearSelection}
+          onClearEarthquake={handleClearEarthquake}
+          onDispatchReconToQuake={handleDispatchReconToQuake}
           events={events}
           onTriggerAction={handleTriggerAction}
           onTriggerSectorIrrigation={handleTriggerSectorIrrigation}

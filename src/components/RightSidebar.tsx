@@ -19,15 +19,19 @@ import {
   Gauge,
   Play,
   Crosshair,
-  Navigation
+  Navigation,
+  Waves
 } from 'lucide-react';
-import { Asset, Sector, TelemetryEvent, EventSeverity } from '../types';
+import { Asset, Sector, TelemetryEvent, EventSeverity, EarthquakeEvent } from '../types';
 import { soundManager } from '../utils/audio';
 
 interface RightSidebarProps {
   selectedAsset: Asset | null;
   selectedSector: Sector | null;
+  selectedEarthquake?: EarthquakeEvent | null;
   onClearSelection: () => void;
+  onClearEarthquake?: () => void;
+  onDispatchReconToQuake?: (quake: EarthquakeEvent) => void;
   events: TelemetryEvent[];
   onTriggerAction: (assetId: string, actionName: string) => void;
   onTriggerSectorIrrigation: (sectorId: string) => void;
@@ -43,7 +47,10 @@ interface RightSidebarProps {
 export default function RightSidebar({
   selectedAsset,
   selectedSector,
+  selectedEarthquake = null,
   onClearSelection,
+  onClearEarthquake,
+  onDispatchReconToQuake,
   events,
   onTriggerAction,
   onTriggerSectorIrrigation,
@@ -108,16 +115,33 @@ export default function RightSidebar({
       {/* Top Header of Right Panel */}
       <div className="h-9 px-3 border-b border-[#1a1a1a] flex items-center justify-between bg-[#0a0a0a]">
         <div className="flex items-center gap-2">
-          <Activity className="w-3.5 h-3.5 text-[#00ff88]" />
-          <span className="text-white font-mono text-[10px] tracking-widest font-bold">
-            {selectedAsset ? `TARGET INSPECTION: ${selectedAsset.callsign}` : selectedSector ? `SECTOR ANALYTICS: ${selectedSector.id}` : 'TACTICAL TELEMETRY STREAM'}
+          {selectedEarthquake ? (
+            <Activity className="w-3.5 h-3.5 text-[#ff0033] animate-pulse" />
+          ) : (
+            <Activity className="w-3.5 h-3.5 text-[#00ff88]" />
+          )}
+          <span className="text-white font-mono text-[10px] tracking-widest font-bold truncate max-w-[260px]">
+            {selectedEarthquake
+              ? `SEISMIC TELEMETRY: M${selectedEarthquake.magnitude.toFixed(1)}`
+              : selectedAsset
+              ? `TARGET INSPECTION: ${selectedAsset.callsign}`
+              : selectedSector
+              ? `SECTOR ANALYTICS: ${selectedSector.id}`
+              : 'TACTICAL TELEMETRY STREAM'}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {(selectedAsset || selectedSector) && (
+          {(selectedAsset || selectedSector || selectedEarthquake) && (
             <button
-              onClick={() => { soundManager.playClick(); onClearSelection(); }}
+              onClick={() => {
+                soundManager.playClick();
+                if (selectedEarthquake && onClearEarthquake) {
+                  onClearEarthquake();
+                } else {
+                  onClearSelection();
+                }
+              }}
               className="text-[#666] hover:text-[#ff8800] text-[10px] font-mono flex items-center gap-0.5"
             >
               <X className="w-3 h-3" />
@@ -134,8 +158,98 @@ export default function RightSidebar({
         </div>
       </div>
 
-      {/* Selected Asset Details or Selected Sector */}
-      {selectedAsset ? (
+      {/* Selected Earthquake Details Card */}
+      {selectedEarthquake ? (
+        <div className="p-3 border-b border-[#2a1111] bg-[#120707] border-l-2 border-l-[#ff0033]">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[15px] font-mono font-black tracking-wider ${
+                  selectedEarthquake.magnitude >= 4.0 ? 'text-[#ff0033]' :
+                  selectedEarthquake.magnitude >= 3.0 ? 'text-[#ff8800]' : 'text-[#ffcc00]'
+                }`}>
+                  M{selectedEarthquake.magnitude.toFixed(1)} SEISMIC EVENT
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-[2px] uppercase border bg-[#ff0033]/20 border-[#ff0033]/40 text-[#ff4466]">
+                  {selectedEarthquake.provider}
+                </span>
+              </div>
+              <div className="text-[12px] font-mono text-white font-bold mt-1">
+                {selectedEarthquake.location}
+              </div>
+              <div className="text-[9.5px] font-mono text-[#888] mt-0.5">
+                DETECTED: {selectedEarthquake.dateFormatted} • {new Date(selectedEarthquake.time).toLocaleTimeString()}
+              </div>
+            </div>
+
+            <div className="text-right font-mono text-[9px] text-[#888] flex flex-col items-end">
+              <div>LAT: {selectedEarthquake.lat.toFixed(4)}°</div>
+              <div>LNG: {selectedEarthquake.lng.toFixed(4)}°</div>
+            </div>
+          </div>
+
+          {/* Quick Metrics Grid */}
+          <div className="grid grid-cols-3 gap-2 mt-3 font-mono">
+            {/* Magnitude */}
+            <div className="p-2 rounded-[2px] bg-[#1a0a0a] border border-[#331111]">
+              <div className="flex items-center justify-between text-[9px] text-[#888]">
+                <span>MAGNITUDE</span>
+                <Activity className="w-3 h-3 text-[#ff4466]" />
+              </div>
+              <div className="text-[14px] font-bold text-white mt-1">
+                {selectedEarthquake.magnitude.toFixed(1)} <span className="text-[9px] font-normal text-[#888]">Mw</span>
+              </div>
+              <div className="text-[8.5px] text-[#ff8800] mt-0.5">
+                {selectedEarthquake.magnitude >= 4 ? 'MODERATE' : selectedEarthquake.magnitude >= 3 ? 'LIGHT' : 'MICRO'}
+              </div>
+            </div>
+
+            {/* Focal Depth */}
+            <div className="p-2 rounded-[2px] bg-[#1a0a0a] border border-[#331111]">
+              <div className="flex items-center justify-between text-[9px] text-[#888]">
+                <span>FOCAL DEPTH</span>
+                <Gauge className="w-3 h-3 text-[#00e5ff]" />
+              </div>
+              <div className="text-[14px] font-bold text-white mt-1">
+                {selectedEarthquake.depth.toFixed(1)} <span className="text-[9px] font-normal text-[#888]">km</span>
+              </div>
+              <div className="text-[8.5px] text-[#666] mt-0.5">
+                {selectedEarthquake.depth < 15 ? 'CRUSTAL SHALLOW' : 'INTERMEDIATE'}
+              </div>
+            </div>
+
+            {/* Intensity Level */}
+            <div className="p-2 rounded-[2px] bg-[#1a0a0a] border border-[#331111]">
+              <div className="flex items-center justify-between text-[9px] text-[#888]">
+                <span>INTENSITY</span>
+                <AlertTriangle className="w-3 h-3 text-[#ffcc00]" />
+              </div>
+              <div className="text-[14px] font-bold text-white mt-1">
+                {selectedEarthquake.magnitude >= 4.5 ? 'VI' : selectedEarthquake.magnitude >= 3.5 ? 'IV-V' : selectedEarthquake.magnitude >= 2.5 ? 'II-III' : 'I-II'} <span className="text-[9px] font-normal text-[#888]">MMI</span>
+              </div>
+              <div className="text-[8.5px] text-[#00ff88] mt-0.5">
+                TELEMETRY ACTIVE
+              </div>
+            </div>
+          </div>
+
+          {/* Tactical Action for Earthquake */}
+          <div className="mt-3 pt-2.5 border-t border-[#331111]">
+            <div className="text-[9px] font-mono tracking-wider text-[#888] mb-1.5">
+              SEISMIC TACTICAL RESPONSE
+            </div>
+            {onDispatchReconToQuake && (
+              <button
+                onClick={() => onDispatchReconToQuake(selectedEarthquake)}
+                className="w-full py-2 bg-[#ff0033]/15 border border-[#ff0033]/50 text-[#ff5566] hover:bg-[#ff0033]/25 rounded-[2px] font-mono text-[9.5px] font-bold tracking-wider text-center transition-colors flex items-center justify-center gap-1.5 shadow-[0_0_8px_rgba(255,0,51,0.2)]"
+              >
+                <Navigation className="w-3 h-3" />
+                <span>DISPATCH UAV RECON TO EPICENTER</span>
+              </button>
+            )}
+          </div>
+        </div>
+      ) : selectedAsset ? (
         <div className="p-3 border-b border-[#1a1a1a] bg-[#0c0c0c]/80">
           <div className="flex items-start justify-between">
             <div>

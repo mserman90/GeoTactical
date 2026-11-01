@@ -64,6 +64,13 @@ Accessible via the header's **AI COPILOT** terminal, this dual-engine agricultur
 - Field parcels are color-coded by hydration stress (Optimal, Moderate, Critical).
 - Single-click export of current sector boundaries and telemetry attributes to standard `.geojson` files for GIS software (QGIS, ArcGIS, Blender GIS).
 
+### 🌋 8. Live AFAD & Kandilli Seismic Telemetry Grid (Zero-Key & Real-Time)
+- **Official AFAD Event Service & Kandilli Observatory Ingestion:** Ingests live seismic tremor telemetry across Turkey, the Aegean Sea, and the Eastern Mediterranean without requiring any token or account.
+- **Dual-Tier Zero-Auth Architecture:** Leverages direct EMSC FDSNWS GeoJSON feeds (ingesting official AFAD data under `auth: "AFAD"`) paired with Kandilli real-time district feeds to provide high-precision Turkish district/provincial names with zero CORS blocking.
+- **Tactical Seismic HUD & Dynamic Ripple Circles:** Visualizes tremors on the tactical map canvas with magnitude-scaled pulsing shockwaves (green for micro-tremors, orange for M3+, and deep crimson for M4+ events).
+- **Subterranean Acoustic Resonance:** Synthesizes low-frequency seismic rumbling tones using the Web Audio API when tremors above M3.5 are detected.
+- **Instant Epicenter UAV Reconnaissance:** Click any tremor on the map or in the HUD to lock the camera on the epicenter, inspect focal depth/MMI intensity, and dispatch an active UAV on a reconnaissance vector.
+
 ---
 
 ## 🌍 Supported Agricultural Corridors
@@ -248,6 +255,7 @@ npm run lint
 | **AI Reasoning** | [Pollinations.ai](https://pollinations.ai/) | Free, keyless client-side neural model with offline fallback |
 | **Sound Synthesis**| Web Audio API | Zero-asset mathematical audio synthesizer |
 | **Voice Annunciator**| Web Speech API | Native in-browser text-to-speech military radio voice |
+| **Seismic Telemetry**| AFAD & Kandilli / EMSC | 100% keyless, real-time live earthquake telemetry feeds |
 | **Iconography** | [Lucide React](https://lucide.dev/) | Crisp tactical iconography |
 
 ---
@@ -269,6 +277,7 @@ GeoTactical bu engelleri tamamen ortadan kaldıracak şekilde tasarlanmıştır:
 
 ### Öne Çıkan Yetenekler
 - 🛰️ **3 Farklı Tarım Koridoru:** Gediz Havzası (Ege / Türkiye), San Joaquin Vadisi (Kaliforniya / ABD) ve Ren Vadisi Terasları (Almanya) arasında anlık kamera uçuşu ve bölgeye özel ürün/telemetri yüklemesi.
+- 🌋 **Canlı AFAD & Kandilli Deprem Telemetrisi:** AFAD ve Kandilli Rasathanesi verilerini çift katmanlı (EMSC AFAD FDSNWS + yerel uç nokta) mimariyle sıfır anahtar ve sıfır CORS engeliyle anlık çekme; büyüklüğe göre dalgalanan sismik şok dalgaları, harita üstü sismik HUD paneli ve merkez üssüne tek tıkla İHA keşif yönlendirmesi.
 - 🎯 **Hedef Takip Modu (Chase Cam):** Dron veya traktör hareket ettikçe harita kamerasının onu pürüzsüz biçimde takip etmesi.
 - 📍 **İnteraktif Uçuş Rotası Çizici:** Haritaya tıklayarak ardışık koordinat noktaları (`[lng, lat]`) bırakma, mesafe ve uçuş süresini anlık hesaplama ve tek tıkla drona yükleme.
 - 🌧️ **Doppler Yağış ve Rüzgar Radarı:** Dinamik fırtına çekirdeği simülasyonu ve rüzgar hızı vektör alanı.

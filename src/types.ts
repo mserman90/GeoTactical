@@ -49,6 +49,18 @@ export interface TelemetryEvent {
   coords?: [number, number];
 }
 
+export interface EarthquakeEvent {
+  id: string;
+  magnitude: number;
+  depth: number; // in km
+  location: string;
+  time: string;
+  lat: number;
+  lng: number;
+  provider: string; // 'AFAD' | 'KOERI' | 'EMSC'
+  dateFormatted?: string;
+}
+
 export type MapStyleMode = 'tactical_dark' | 'satellite_recon' | 'terrain_topo' | 'osm_standard';
 
 export type WeatherLayerMode = 'precipitation' | 'wind';
@@ -63,6 +75,7 @@ export interface FilterSettings {
   showGridHUD: boolean;
   showWeatherLayer: boolean;
   weatherLayerMode: WeatherLayerMode;
+  showEarthquakes: boolean;
 }
 
 export interface PresetLocation {
